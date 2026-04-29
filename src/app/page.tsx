@@ -1,7 +1,7 @@
 'use client';
 
 // PDA Visualizer - Built for Automata Theory course
-// Author: Sheeba Zaim
+// Author: Tabish Shoukat
 // Last updated: March 2026
 
 import React, { useState, useEffect, useRef } from 'react';
