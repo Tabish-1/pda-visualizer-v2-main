@@ -125,7 +125,7 @@ Stack Alphabet: Z0, A, B
 
 ---
 
-## 🔧 Manual Configuration Examples
+## Manual Configuration Examples
 
 Use these to practice creating custom PDAs!
 
@@ -287,7 +287,7 @@ Stack Alphabet: Z0, A, B
 
 ---
 
-## 🎯 Practice Exercises
+## Practice Exercises
 
 Try creating these PDAs yourself:
 
@@ -312,7 +312,7 @@ Create a PDA that accepts binary strings with an even number of 1's.
 
 ---
 
-## 📋 Quick Reference Card
+## Quick Reference Card
 
 ### Transition Format
 ```
@@ -341,7 +341,7 @@ q0         | a    | Z0  | AZ0  | q0
 
 ---
 
-## 🔍 Testing Checklist
+## Testing Checklist
 
 When testing any PDA:
 
@@ -355,6 +355,6 @@ When testing any PDA:
 
 ---
 
-**Happy Testing! 🎓**
+**Happy Testing!**
 
 For usage instructions, see **[README.md](./README.md)**
