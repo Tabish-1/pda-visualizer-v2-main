@@ -1,5 +1,5 @@
 
-// src/components/StackVisualizer.tsx
+// src/components/StackVisualiser.tsx
 // Shows one stack card per active NPDA branch
 
 'use client';
@@ -7,14 +7,14 @@
 import React from 'react';
 import { Configuration } from '../types/pda.types';
 
-interface StackVisualizerProps {
+interface StackVisualiserProps {
   configurations: Configuration[];
   acceptStates: string[];
 }
 
 const MAX_DISPLAYED = 6;
 
-export const StackVisualizer: React.FC<StackVisualizerProps> = ({ configurations, acceptStates }) => {
+export const StackVisualiser: React.FC<StackVisualiserProps> = ({ configurations, acceptStates }) => {
   const displayed = configurations.slice(0, MAX_DISPLAYED);
   const overflow = configurations.length - displayed.length;
 

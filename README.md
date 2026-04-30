@@ -1,4 +1,4 @@
-#  PDA Visualizer — Pushdown Automata Simulator
+#  PDA Visualiser — Pushdown Automata Simulator
 
 > **An interactive Next.js web application for visualizing and simulating Pushdown Automata (PDAs).**
 
@@ -267,11 +267,11 @@ Each transition has 5 parts:
 ## Project Structure
 
 ```
-pda-visualizer/
+pda-visualiser/
 ├── src/
 │   ├── app/
 │   │   ├── layout.tsx      # Root layout with fonts
-│   │   ├── page.tsx        # Main PDA Visualizer component
+│   │   ├── page.tsx        # Main PDA Visualiser component
 │   │   └── globals.css     # Global styles
 ├── package.json
 ├── tailwind.config.ts

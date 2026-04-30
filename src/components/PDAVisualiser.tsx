@@ -1,4 +1,4 @@
-// src/components/PDAVisualizer.tsx
+// src/components/PDAVisualiser.tsx
 
 'use client';
 
@@ -9,13 +9,13 @@ import { PDAConfig, Transition, Configuration } from '../types/pda.types';
 import { examplePDAs } from '../utils/examples';
 import { StateEditor } from './StateEditor';
 import { TransitionEditor } from './TransitionEditor';
-import { StackVisualizer } from './StackVisualizer';
+import { StackVisualiser } from './StackVisualiser';
 import { InputTape } from './InputTape';
 import { StateDiagram } from './StateDiagram';
 
 type SimStatus = 'idle' | 'ready' | 'stepping' | 'accepted' | 'rejected';
 
-export const PDAVisualizer: React.FC = () => {
+export const PDAVisualiser: React.FC = () => {
   const [states, setStates] = useState<string[]>(['q0', 'q1']);
   const [startState, setStartState] = useState<string>('q0');
   const [acceptStates, setAcceptStates] = useState<string[]>(['q1']);
@@ -212,7 +212,7 @@ export const PDAVisualizer: React.FC = () => {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-            Pushdown Automata Visualizer
+            Pushdown Automata Visualiser
           </h1>
           <p className="text-gray-600 text-lg">
             Interactive tool for learning and visualizing PDAs — with full nondeterminism
@@ -339,7 +339,7 @@ export const PDAVisualizer: React.FC = () => {
             />
           </div>
           <div>
-            <StackVisualizer
+            <StackVisualiser
               configurations={activeConfigurations}
               acceptStates={acceptStates}
             />

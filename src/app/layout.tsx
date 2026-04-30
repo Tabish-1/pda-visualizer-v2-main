@@ -15,8 +15,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PDA Visualizer - Pushdown Automata Simulator",
-  description: "Interactive tool for visualizing and simulating Pushdown Automata",
+  title: "PDA Visualiser - Pushdown Automata Simulator",
+  description: "Interactive tool for visualising and simulating Pushdown Automata",
 };
 
 export default function RootLayout({

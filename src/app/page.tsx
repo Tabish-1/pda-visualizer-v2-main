@@ -1,6 +1,6 @@
 'use client';
 
-// PDA Visualizer - Built for Automata Theory course
+// PDA Visualiser - Built for Automata Theory course
 // Author: Tabish Shoukat
 // Last updated: March 2026
 
@@ -82,7 +82,7 @@ const examples: Record<string, Example> = {
   }
 };
 
-export default function PDAVisualizer() {
+export default function PDAVisualiser() {
   // Theme state
   const [theme, setTheme] = useState('dark');
   
@@ -470,7 +470,7 @@ export default function PDAVisualizer() {
         <div className="header-brand">
           <div className="header-logo">P</div>
           <div>
-            <div className="header-title">PDA Visualizer</div>
+            <div className="header-title">PDA Visualiser</div>
             <div className="header-tagline">Pushdown Automata Simulator</div>
           </div>
         </div>

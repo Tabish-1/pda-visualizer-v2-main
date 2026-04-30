@@ -1,6 +1,6 @@
-#  PDA Visualizer — Example Data & Test Cases
+#  PDA Visualiser — Example Data & Test Cases
 
-> **Complete reference for testing the PDA Visualizer with sample configurations and expected results.**
+> **Complete reference for testing the PDA Visualiser with sample configurations and expected results.**
 
 ---
 
