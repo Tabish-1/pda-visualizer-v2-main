@@ -1,4 +1,4 @@
-# 🎓 PDA Visualizer — Pushdown Automata Simulator
+#  PDA Visualizer — Pushdown Automata Simulator
 
 > **An interactive Next.js web application for visualizing and simulating Pushdown Automata (PDAs).**
 
@@ -7,7 +7,7 @@
 
 ---
 
-## 📖 Table of Contents
+## Table of Contents
 
 - [Quick Start](#-quick-start)
 - [Features](#-features)
@@ -19,7 +19,7 @@
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Install Dependencies
 ```bash
@@ -46,13 +46,13 @@ Navigate to **[http://localhost:3000](http://localhost:3000)**
 |  **Auto-Generate** | Create PDAs from natural language descriptions |
 |  **Manual Configuration** | Fully editable states, alphabets, and transitions |
 |  **Step Log** | Detailed explanation of each simulation step |
-| 🌓 **Dark/Light Theme** | Toggle for comfortable viewing |
-| ⌨️ **Keyboard Shortcuts** | Fast controls without mouse |
-| 📱 **Responsive Design** | Works on desktop, tablet, and mobile |
+|  **Dark/Light Theme** | Toggle for comfortable viewing |
+|  **Keyboard Shortcuts** | Fast controls without mouse |
+|  **Responsive Design** | Works on desktop, tablet, and mobile |
 
 ---
 
-## 📖 How to Use
+## How to Use
 
 ### Method 1: Use Pre-loaded Examples (Easiest)
 
@@ -63,7 +63,7 @@ Navigate to **[http://localhost:3000](http://localhost:3000)**
 
 2. **Enter test string** in the "Test String" input field
 
-3. **Click ▶ Play** to run simulation
+3. **Click Play** to run simulation
 
 4. **Watch the result** — Green = ACCEPTED, Red = REJECTED
 
@@ -76,7 +76,7 @@ Navigate to **[http://localhost:3000](http://localhost:3000)**
    - `"equal number of a's and b's"`
    - `"palindrome with center marker"`
 
-2. Click **⚡ Auto-Generate**
+2. Click **Auto-Generate**
 
 3. The PDA is created automatically!
 
@@ -91,7 +91,7 @@ In **Configuration** section:
 - **States:** `a0, a1, a2*` (use `*` for accept states)
 - **Input Alphabet:** `a, b, c`
 - **Stack Alphabet:** `Z0, A, B`
-- Click **💾 Update Configuration**
+- Click **Update Configuration**
 
 #### Step 2: Add Transitions
 In **Add Transition** section:
@@ -104,11 +104,11 @@ In **Add Transition** section:
 
 #### Step 3: Test
 - Enter test string
-- Click **▶ Play**
+- Click **Play**
 
 ---
 
-## ⚙️ Configuration Guide
+## Configuration Guide
 
 ### Understanding Transitions
 
@@ -145,9 +145,9 @@ Each transition has 5 parts:
 
 ---
 
-## 📚 Examples
+## Examples
 
-### Example 1: Balanced Parentheses ✅
+### Example 1: Balanced Parentheses 
 
 **Language:** All strings with properly nested parentheses
 
@@ -159,14 +159,14 @@ Each transition has 5 parts:
 **Test Cases:**
 | Input | Result | Explanation |
 |-------|--------|-------------|
-| `(())` | ✅ ACCEPTED | Properly nested |
-| `()()` | ✅ ACCEPTED | Two balanced pairs |
-| `(()` | ❌ REJECTED | Missing closing paren |
-| `())` | ❌ REJECTED | Extra closing paren |
+| `(())` | ACCEPTED | Properly nested |
+| `()()` | ACCEPTED | Two balanced pairs |
+| `(()` | REJECTED | Missing closing paren |
+| `())` | REJECTED | Extra closing paren |
 
 ---
 
-### Example 2: aⁿbⁿ Language ✅
+### Example 2: aⁿbⁿ Language
 
 **Language:** Equal number of a's followed by equal number of b's
 
@@ -178,15 +178,15 @@ Each transition has 5 parts:
 **Test Cases:**
 | Input | Result | Explanation |
 |-------|--------|-------------|
-| `aabb` | ✅ ACCEPTED | 2 a's, 2 b's |
-| `aaabbb` | ✅ ACCEPTED | 3 a's, 3 b's |
-| `ab` | ✅ ACCEPTED | 1 a, 1 b |
-| `aaab` | ❌ REJECTED | 3 a's, only 1 b |
-| `abab` | ❌ REJECTED | a's and b's mixed |
+| `aabb` | ACCEPTED | 2 a's, 2 b's |
+| `aaabbb` | ACCEPTED | 3 a's, 3 b's |
+| `ab` | ACCEPTED | 1 a, 1 b |
+| `aaab` | REJECTED | 3 a's, only 1 b |
+| `abab` | REJECTED | a's and b's mixed |
 
 ---
 
-### Example 3: wcwᴿ Palindrome ✅
+### Example 3: wcwᴿ Palindrome 
 
 **Language:** String, center marker `c`, then reverse of string
 
@@ -198,15 +198,15 @@ Each transition has 5 parts:
 **Test Cases:**
 | Input | Result | Explanation |
 |-------|--------|-------------|
-| `abcba` | ✅ ACCEPTED | `ab` + `c` + `ba` |
-| `aacaa` | ✅ ACCEPTED | `a` + `c` + `a` |
-| `abacaba` | ✅ ACCEPTED | `aba` + `c` + `aba` |
-| `abcd` | ❌ REJECTED | No center marker |
-| `abccba` | ❌ REJECTED | Extra `c` |
+| `abcba` | ACCEPTED | `ab` + `c` + `ba` |
+| `aacaa` | ACCEPTED | `a` + `c` + `a` |
+| `abacaba` | ACCEPTED | `aba` + `c` + `aba` |
+| `abcd` | REJECTED | No center marker |
+| `abccba` | REJECTED | Extra `c` |
 
 ---
 
-## ⌨️ Keyboard Shortcuts
+## Keyboard Shortcuts
 
 | Key | Action |
 |-----|--------|
@@ -216,7 +216,7 @@ Each transition has 5 parts:
 
 ---
 
-## 🎨 UI Components
+## UI Components
 
 ### Sidebar (Left)
 - **Quick Builder** — Auto-generate PDAs from descriptions
@@ -235,21 +235,21 @@ Each transition has 5 parts:
 
 ---
 
-## 🛠️ Troubleshooting
+## Troubleshooting
 
 ### Can't Type in Input Fields
 **Solution:** Refresh the page (Ctrl+Shift+R or Ctrl+F5)
 
 ### State Diagram Not Updating
 **Solution:** 
-1. Click **💾 Update Configuration** after changing states
+1. Click **Update Configuration** after changing states
 2. Wait 1-2 seconds for canvas to redraw
 
 ### Simulation Not Starting
 **Solution:**
 1. Make sure an example is loaded OR configuration is set
 2. Enter a test string
-3. Click ▶ Play button
+3. Click Play button
 
 ### Transitions Not Working
 **Solution:**
@@ -259,12 +259,12 @@ Each transition has 5 parts:
 
 ### Canvas Shows Blank
 **Solution:**
-1. Click **🗑️ Clear All** then load an example
+1. Click **Clear All** then load an example
 2. Or add states and click **Update Configuration**
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 pda-visualizer/
@@ -281,7 +281,7 @@ pda-visualizer/
 
 ---
 
-## 🖥️ Tech Stack
+## Tech Stack
 
 - **Framework:** Next.js 16 with App Router
 - **Language:** TypeScript
@@ -291,7 +291,7 @@ pda-visualizer/
 
 ---
 
-## 🎯 Tips for Success
+## Tips for Success
 
 1. **Start with examples** — They're guaranteed to work
 2. **Use Step mode** — To understand how transitions work
@@ -301,13 +301,13 @@ pda-visualizer/
 
 ---
 
-## 📄 License
+## License
 
 MIT License — Open source for educational purposes.
 
 ---
 
-## 🙋 Need Help?
+## Need Help?
 
 1. **Check EXAMPLES.md** — Sample data with exact configurations
 2. **Try the examples** — Click example cards in sidebar
@@ -316,6 +316,6 @@ MIT License — Open source for educational purposes.
 
 ---
 
-**Happy Automata Learning! 🎓**
+**Happy Automata Learning! **
 
 For more examples and test cases, see **[EXAMPLES.md](./EXAMPLES.md)**
