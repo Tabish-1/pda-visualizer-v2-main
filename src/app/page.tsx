@@ -31,6 +31,17 @@ interface Example {
   testString: string;
 }
 
+interface SimulationSnapshot {
+  state: string;
+  stack: string[];
+  inputPosition: number;
+  step: number;
+}
+
+type AdvanceResult =
+  | { status: 'advanced' | 'accepted'; snapshot: SimulationSnapshot; transition: Transition; readSymbol: string }
+  | { status: 'accepted' | 'rejected'; snapshot: SimulationSnapshot; message: string };
+
 // Pre-loaded example PDAs for testing
 // TODO: Add more examples (divisible by 3, even parity, etc.)
 const examples: Record<string, Example> = {
@@ -130,13 +141,52 @@ export default function PDAVisualiser() {
     return states.filter(s => s.includes('*')).map(s => s.replace('*', ''));
   }
 
-  function isAcceptState(s: string): boolean {
+  function isEpsilonSymbol(s: string): boolean {
+    return s === '' || s === 'ε';
+  }
+
+  function isStackEmptyForAccept(stackValue: string[]): boolean {
+    return stackValue.length === 0 || (stackValue.length === 1 && stackValue[0] === 'Z0');
+  }
+
+  function tokenizeStackPush(push: string, stackAlphabet: string[]): string[] {
+    if (isEpsilonSymbol(push)) return [];
+
+    const symbols = [...stackAlphabet].sort((a, b) => b.length - a.length);
+    const tokens: string[] = [];
+    let remaining = push;
+
+    while (remaining.length > 0) {
+      const match = symbols.find(symbol => remaining.startsWith(symbol));
+      if (match) {
+        tokens.push(match);
+        remaining = remaining.slice(match.length);
+      } else {
+        tokens.push(remaining[0]);
+        remaining = remaining.slice(1);
+      }
+    }
+
+    return tokens;
+  }
+
+  function isAcceptState(s: string, activePda: PDA | null = pda): boolean {
     const cleanState = s.replace('*', '');
-    if (pda) {
-      const acceptStates = getAcceptStates(pda.states);
+    if (activePda) {
+      const acceptStates = getAcceptStates(activePda.states);
       return acceptStates.includes(cleanState) || s.includes('*');
     }
     return false;
+  }
+
+  function isAcceptingConfiguration(
+    state: string,
+    stackValue: string[],
+    inputPosition: number,
+    activePda: PDA | null = pda,
+    inputValue: string = testInput
+  ): boolean {
+    return isAcceptState(state, activePda) && isStackEmptyForAccept(stackValue) && inputPosition >= inputValue.length;
   }
 
   function loadExample(key: string) {
@@ -157,16 +207,15 @@ export default function PDAVisualiser() {
     setStackAlphabet(example.stackAlphabet.join(', '));
     setTestInput(example.testString);
     setNlError('');
-    resetSimulation();
-    setTimeout(() => drawCanvas(), 100);
+    resetSimulation(newPda);
   }
 
-  function resetSimulation() {
+  function resetSimulation(nextPda: PDA | null = pda) {
     setIsRunning(false);
     setStepCount(0);
     setTapePosition(0);
     setStack(['Z0']);
-    setCurrentState(pda ? getStartState(pda.states) : null);
+    setCurrentState(nextPda ? getStartState(nextPda.states) : null);
     setResultStatus('idle');
     setResultMessage('Enter an input string and click Play to simulate');
     setStepLog([]);
@@ -368,111 +417,185 @@ export default function PDAVisualiser() {
     }
   }
 
-  function runSimulation() {
-    if (!pda || !testInput) return;
-    
-    resetSimulation();
+  function advanceSnapshot(activePda: PDA, inputValue: string, snapshot: SimulationSnapshot): AdvanceResult {
+    if (snapshot.step >= 500) {
+      return { status: 'rejected', snapshot, message: '❌ REJECTED — Max steps reached' };
+    }
+
+    if (isAcceptingConfiguration(snapshot.state, snapshot.stack, snapshot.inputPosition, activePda, inputValue)) {
+      return { status: 'accepted', snapshot, message: '✅ ACCEPTED — String matches!' };
+    }
+
+    const readSymbol = snapshot.inputPosition < inputValue.length ? inputValue[snapshot.inputPosition] : 'ε';
+    const topOfStack = snapshot.stack.length > 0 ? snapshot.stack[snapshot.stack.length - 1] : null;
+    const inputRemaining = snapshot.inputPosition < inputValue.length;
+
+    const matchingTransitions = activePda.transitions.filter(t => {
+      const fromMatch = t.from.replace('*', '') === snapshot.state.replace('*', '');
+      const readMatch = isEpsilonSymbol(t.read) || t.read === readSymbol;
+      const popMatch = isEpsilonSymbol(t.pop) || t.pop === topOfStack;
+      return fromMatch && readMatch && popMatch;
+    });
+    const consumingTransitions = matchingTransitions.filter(t => !isEpsilonSymbol(t.read));
+    const availableTransitions = inputRemaining && consumingTransitions.length > 0
+      ? consumingTransitions
+      : matchingTransitions;
+
+    if (availableTransitions.length === 0) {
+      return {
+        status: 'rejected',
+        snapshot,
+        message: `❌ REJECTED — No transition from ${snapshot.state}`
+      };
+    }
+
+    const transition = availableTransitions[0];
+    const nextStack = [...snapshot.stack];
+    if (!isEpsilonSymbol(transition.pop) && nextStack.length > 0) {
+      nextStack.pop();
+    }
+
+    const pushedSymbols = tokenizeStackPush(transition.push, activePda.stackAlphabet);
+    for (let i = pushedSymbols.length - 1; i >= 0; i--) {
+      nextStack.push(pushedSymbols[i]);
+    }
+
+    const nextInputPosition =
+      !isEpsilonSymbol(transition.read) && transition.read === readSymbol && snapshot.inputPosition < inputValue.length
+        ? snapshot.inputPosition + 1
+        : snapshot.inputPosition;
+
+    const nextSnapshot = {
+      state: transition.to,
+      stack: nextStack,
+      inputPosition: nextInputPosition,
+      step: snapshot.step + 1
+    };
+
+    const status = isAcceptingConfiguration(nextSnapshot.state, nextSnapshot.stack, nextSnapshot.inputPosition, activePda, inputValue)
+      ? 'accepted'
+      : 'advanced';
+
+    return { status, snapshot: nextSnapshot, transition, readSymbol };
+  }
+
+  function showSnapshot(snapshot: SimulationSnapshot) {
+    setCurrentState(snapshot.state);
+    setStack([...snapshot.stack]);
+    setTapePosition(snapshot.inputPosition);
+    setStepCount(snapshot.step);
+  }
+
+  function logTransition(result: Extract<AdvanceResult, { transition: Transition }>) {
+    const readText = isEpsilonSymbol(result.transition.read) ? 'ε' : result.readSymbol;
+    const popText = result.transition.pop || 'ε';
+    const pushText = result.transition.push || 'ε';
+
+    addStepLog(
+      `#${result.snapshot.step} ${result.transition.from} → Read: ${readText} → Pop: ${popText} → Push: ${pushText} → ${result.transition.to}`
+    );
+  }
+
+  function stepSimulation() {
+    if (!pda || !testInput || isRunning || resultStatus === 'accepted' || resultStatus === 'rejected') return;
+
+    const snapshot = {
+      state: currentState ?? getStartState(pda.states),
+      stack: [...stack],
+      inputPosition: tapePosition,
+      step: stepCount
+    };
+    const result = advanceSnapshot(pda, testInput, snapshot);
+
+    showSnapshot(result.snapshot);
+
+    if ('transition' in result) {
+      logTransition(result);
+    }
+
+    if (result.status === 'accepted') {
+      setResultStatus('accepted');
+      setResultMessage('✅ ACCEPTED — String matches!');
+      addStepLog(`Step ${result.snapshot.step}: ACCEPTED`);
+    } else if (result.status === 'rejected') {
+      setResultStatus('rejected');
+      setResultMessage(result.message);
+    } else {
+      setResultStatus('running');
+      setResultMessage('Running one step at a time...');
+    }
+  }
+
+  async function runSimulation() {
+    if (!pda || !testInput || isRunning || resultStatus === 'accepted' || resultStatus === 'rejected') return;
+
     setIsRunning(true);
     setResultStatus('running');
     setResultMessage('⏳ Running simulation...');
-    
-    let currentStack = ['Z0'];
-    let currentPos = 0;
-    let currentStep = 0;
-    let currentStateTemp = getStartState(pda.states);
-    const maxSteps = 500;
-    
-    const runStep = () => {
-      if (currentStep >= maxSteps) {
-        setResultStatus('rejected');
-        setResultMessage('❌ REJECTED — Max steps reached');
-        setIsRunning(false);
-        return;
-      }
-      
-      const readSymbol = currentPos < testInput.length ? testInput[currentPos] : 'ε';
-      const topOfStack = currentStack.length > 0 ? currentStack[currentStack.length - 1] : null;
-      
-      const availableTransitions = pda.transitions.filter(t => {
-        const fromMatch = t.from.replace('*', '') === currentStateTemp.replace('*', '');
-        const readMatch = t.read === 'ε' || t.read === readSymbol;
-        const popMatch = t.pop === 'ε' || t.pop === '' || t.pop === topOfStack;
-        return fromMatch && readMatch && popMatch;
-      });
-      
-      if (availableTransitions.length === 0) {
-        if (isAcceptState(currentStateTemp) && currentStack.length === 1 && currentPos >= testInput.length) {
-          setResultStatus('accepted');
-          setResultMessage('✅ ACCEPTED — String matches!');
-          addStepLog(`Step ${currentStep}: ACCEPTED`);
-        } else {
-          setResultStatus('rejected');
-          setResultMessage(`❌ REJECTED — No transition from ${currentStateTemp}`);
-        }
-        setIsRunning(false);
-        return;
-      }
-      
-      const t = availableTransitions[0];
-      
-      if (t.pop !== 'ε' && t.pop !== '' && currentStack.length > 0) {
-        currentStack.pop();
-      }
-      if (t.push !== '' && t.push !== 'ε') {
-        for (const char of t.push) {
-          currentStack.push(char);
-        }
-      }
-      
-      if (t.read !== 'ε' && t.read === readSymbol && currentPos < testInput.length) {
-        currentPos++;
-      }
-      
-      currentStateTemp = t.to;
-      setCurrentState(t.to);
-      setStack([...currentStack]);
-      setTapePosition(currentPos);
-      setStepCount(++currentStep);
-      
-      // Plain text step log (no HTML)
-      const readText = t.read === 'ε' ? 'ε' : readSymbol;
-      const popText = t.pop || 'ε';
-      const pushText = t.push || 'ε';
-      
-      addStepLog(
-        `#${currentStep} ${t.from} → Read: ${readText} → Pop: ${popText} → Push: ${pushText} → ${t.to}`
-      );
-      
-      setTimeout(runStep, 2100 - simulationSpeed);
+
+    let snapshot = {
+      state: currentState ?? getStartState(pda.states),
+      stack: [...stack],
+      inputPosition: tapePosition,
+      step: stepCount
     };
-    
-    runStep();
+
+    while (true) {
+      await new Promise(resolve => setTimeout(resolve, 2100 - simulationSpeed));
+
+      const result = advanceSnapshot(pda, testInput, snapshot);
+      snapshot = result.snapshot;
+      showSnapshot(snapshot);
+
+      if ('transition' in result) {
+        logTransition(result);
+      }
+
+      if (result.status === 'accepted') {
+        setResultStatus('accepted');
+        setResultMessage('✅ ACCEPTED — String matches!');
+        setIsRunning(false);
+        addStepLog(`Step ${snapshot.step}: ACCEPTED`);
+        return;
+      }
+
+      if (result.status === 'rejected') {
+        setResultStatus('rejected');
+        setResultMessage(result.message);
+        setIsRunning(false);
+        return;
+      }
+    }
   }
 
   useEffect(() => {
     loadExample('balanced');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (pda && currentState) {
       drawCanvas();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pda, currentState]);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
-  // Keyboard shortcuts: Space / P = Play, R = Reset
+  // Keyboard shortcuts: Space = step, P = play to finish, R = reset
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't fire while the user is typing in an input field
       const tag = (e.target as HTMLElement).tagName.toLowerCase();
       if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
 
-      if (e.key === ' ' || e.key === 'p' || e.key === 'P') {
+      if (e.key === ' ') {
         e.preventDefault(); // stop Space from scrolling the page
-        if (!isRunning && pda && testInput) runSimulation();
+        stepSimulation();
+      } else if (e.key === 'p' || e.key === 'P') {
+        runSimulation();
       } else if (e.key === 'r' || e.key === 'R') {
         resetSimulation();
       }
@@ -481,7 +604,7 @@ export default function PDAVisualiser() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isRunning, pda, testInput]);
+  }, [isRunning, pda, testInput, currentState, stack, tapePosition, stepCount, resultStatus, simulationSpeed]);
 
   return (
     <div className="min-h-screen">
@@ -656,11 +779,7 @@ export default function PDAVisualiser() {
                 };
                 
                 setPda(newPda);
-                resetSimulation();
-                // Force canvas redraw with new state names
-                setTimeout(() => {
-                  drawCanvas();
-                }, 50);
+                resetSimulation(newPda);
                 alert(`Configuration updated with states: ${states.join(', ')}\nState diagram updated!`);
               }}
             >
@@ -844,7 +963,7 @@ export default function PDAVisualiser() {
               <div className="shortcuts-hint">
                 <span><kbd className="kbd">Space</kbd> Step</span>
                 <span><kbd className="kbd">R</kbd> Reset</span>
-                <span><kbd className="kbd">P</kbd> Play/Pause</span>
+                <span><kbd className="kbd">P</kbd> Play</span>
               </div>
             </div>
             <div className="viz-panel-content">
@@ -878,18 +997,26 @@ export default function PDAVisualiser() {
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
                   <button
+                    className="btn btn-secondary"
+                    onClick={stepSimulation}
+                    disabled={!pda || !testInput || isRunning || resultStatus === 'accepted' || resultStatus === 'rejected'}
+                  >
+                    Step
+                  </button>
+                  <button
                     className="btn btn-primary"
                     onClick={runSimulation}
-                    disabled={!pda || !testInput || isRunning}
+                    disabled={!pda || !testInput || isRunning || resultStatus === 'accepted' || resultStatus === 'rejected'}
                   >
                     ▶ Play
                   </button>
                   <button
                     className="btn btn-secondary"
-                    onClick={resetSimulation}
+                    onClick={() => resetSimulation()}
                   >
                     ↻ Reset
                   </button>
+                  <span className="text-cyan">Steps: {stepCount}</span>
                   <div className="speed-control">
                     <label className="form-label" style={{ margin: 0 }}>Speed:</label>
                     <input

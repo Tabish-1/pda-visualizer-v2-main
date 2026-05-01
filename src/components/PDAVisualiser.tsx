@@ -319,8 +319,8 @@ export const PDAVisualiser: React.FC = () => {
                 ? 'bg-red-100 text-red-800 border border-red-300'
                 : 'bg-blue-100 text-blue-800 border border-blue-300'
             }`}>
-              {simStatus === 'accepted' && '✅ String Accepted — at least one branch reached an accept state with empty stack'}
-              {simStatus === 'rejected' && '❌ String Rejected — no branch reached an accept state with empty stack'}
+              {simStatus === 'accepted' && ' String Accepted — at least one branch reached an accept state with empty stack'}
+              {simStatus === 'rejected' && ' String Rejected — no branch reached an accept state with empty stack'}
               {simStatus === 'ready'    && `Ready — ${activeConfigurations.length} starting branch${activeConfigurations.length !== 1 ? 'es' : ''} (click Step Forward to advance)`}
               {simStatus === 'stepping' && `Step ${stepCount} — ${activeConfigurations.length} active branch${activeConfigurations.length !== 1 ? 'es' : ''}`}
             </div>

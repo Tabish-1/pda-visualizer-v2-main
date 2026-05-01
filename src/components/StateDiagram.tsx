@@ -4,7 +4,7 @@
 
 'use client';
 
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import { Transition } from '../types/pda.types';
 
 interface StateDiagramProps {
@@ -23,10 +23,9 @@ export const StateDiagram: React.FC<StateDiagramProps> = ({
   acceptStates
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [positions, setPositions] = useState<Record<string, { x: number; y: number }>>({});
 
-  useEffect(() => {
-    if (states.length === 0) return;
+  const positions = useMemo(() => {
+    if (states.length === 0) return {};
 
     const newPositions: Record<string, { x: number; y: number }> = {};
     const centerX = 400;
@@ -41,7 +40,7 @@ export const StateDiagram: React.FC<StateDiagramProps> = ({
       };
     });
 
-    setPositions(newPositions);
+    return newPositions;
   }, [states]);
 
   useEffect(() => {
