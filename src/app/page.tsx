@@ -579,7 +579,7 @@ export default function PDAVisualiser() {
 
     setIsRunning(true);
     setResultStatus('running');
-    setResultMessage('⏳ Running simulation...');
+    setResultMessage(' Running simulation...');
 
     let snapshot = {
       state: currentState ?? getStartState(pda.states),
