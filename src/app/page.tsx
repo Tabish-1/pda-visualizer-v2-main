@@ -830,7 +830,7 @@ export default function PDAVisualiser() {
             <div className="viz-panel-content">
               <div className="sim-controls">
                 <div className="sim-input-group">
-                  <label className="form-label" style={{ marginBottom: '0.5rem' }}>📝 Test String:</label>
+                  <label className="form-label" style={{ marginBottom: '0.5rem' }}> Test String:</label>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
                     <input
                       type="text"
