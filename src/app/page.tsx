@@ -483,7 +483,7 @@ export default function PDAVisualiser() {
       <section className={`how-it-works ${howItWorksCollapsed ? 'collapsed' : ''}`}>
         <div className="how-it-works-header" onClick={() => setHowItWorksCollapsed(!howItWorksCollapsed)}>
           <h3 className="how-it-works-title">
-            <span>📖</span> How It Works
+            <span></span> How It Works
           </h3>
           <span className="how-it-works-toggle">▼</span>
         </div>
@@ -516,7 +516,7 @@ export default function PDAVisualiser() {
           {/* Quick Builder */}
           <div className="sidebar-section">
             <h3 className="sidebar-title">
-              <span>🚀</span> Quick Builder
+              <span></span> Quick Builder
             </h3>
             <div className="form-group">
               <label className="form-label">What should the PDA accept?</label>
@@ -537,7 +537,7 @@ export default function PDAVisualiser() {
           {/* Examples */}
           <div className="sidebar-section">
             <h3 className="sidebar-title">
-              <span>📚</span> Examples
+              <span></span> Examples
             </h3>
             <div className="example-grid">
               {Object.entries(examples).map(([key, example]) => (
@@ -581,7 +581,7 @@ export default function PDAVisualiser() {
                 }}
                 style={{ fontSize: '0.75rem', padding: '0.3rem 0.5rem' }}
               >
-                🗑️ Clear All
+                 Clear All
               </button>
             </div>
             <div className="form-group">
@@ -644,14 +644,14 @@ export default function PDAVisualiser() {
                 alert(`Configuration updated with states: ${states.join(', ')}\nState diagram updated!`);
               }}
             >
-              💾 Update Configuration
+               Update Configuration
             </button>
           </div>
 
           {/* Add Transition */}
           <div className="sidebar-section">
             <h3 className="sidebar-title">
-              <span>➕</span> Add Transition
+              <span></span> Add Transition
             </h3>
             <div className="form-group">
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.5rem' }}>
@@ -736,7 +736,7 @@ export default function PDAVisualiser() {
           {/* Transitions */}
           <div className="sidebar-section">
             <h3 className="sidebar-title">
-              <span>🔀</span> Transitions ({transitions.length})
+              <span></span> Transitions ({transitions.length})
             </h3>
             <div className="transition-list">
               {transitions.map((t, i) => (
@@ -760,7 +760,7 @@ export default function PDAVisualiser() {
           {/* Canvas */}
           <div className="canvas-container">
             <div className="canvas-header">
-              <span className="canvas-title">📊 State Diagram</span>
+              <span className="canvas-title"> State Diagram</span>
             </div>
             <canvas ref={canvasRef} id="stateCanvas" />
           </div>
@@ -770,7 +770,7 @@ export default function PDAVisualiser() {
             {/* Stack */}
             <div className="viz-panel">
               <div className="viz-panel-header">
-                <span className="viz-panel-title">📚 Stack</span>
+                <span className="viz-panel-title"> Stack</span>
                 <span className="text-cyan">Height: {stack.length}</span>
               </div>
               <div className="viz-panel-content">
@@ -792,7 +792,7 @@ export default function PDAVisualiser() {
             {/* Input Tape */}
             <div className="viz-panel">
               <div className="viz-panel-header">
-                <span className="viz-panel-title">📜 Input Tape</span>
+                <span className="viz-panel-title"> Input Tape</span>
                 <span className="text-accent">Position: {tapePosition}</span>
               </div>
               <div className="viz-panel-content">
@@ -889,7 +889,7 @@ export default function PDAVisualiser() {
           {/* Step Log */}
           <div className="step-log">
             <div className="step-log-header">
-              <span className="step-log-title">📝 Step Log</span>
+              <span className="step-log-title"> Step Log</span>
               <button className="btn btn-secondary btn-sm" onClick={() => setStepLog([])}>Clear</button>
             </div>
             <div className="step-log-content" ref={stepLogRef}>
