@@ -463,6 +463,26 @@ export default function PDAVisualiser() {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
+  // Keyboard shortcuts: Space / P = Play, R = Reset
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't fire while the user is typing in an input field
+      const tag = (e.target as HTMLElement).tagName.toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
+      if (e.key === ' ' || e.key === 'p' || e.key === 'P') {
+        e.preventDefault(); // stop Space from scrolling the page
+        if (!isRunning && pda && testInput) runSimulation();
+      } else if (e.key === 'r' || e.key === 'R') {
+        resetSimulation();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isRunning, pda, testInput]);
+
   return (
     <div className="min-h-screen">
       {/* Header */}
