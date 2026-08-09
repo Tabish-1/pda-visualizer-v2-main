@@ -1,5 +1,8 @@
 # PDA Visualiser
 
+[![CI](https://github.com/Tabish-1/PDA-Visualiser-Website/actions/workflows/ci.yml/badge.svg)](https://github.com/Tabish-1/PDA-Visualiser-Website/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 An interactive web application for visualising and simulating Pushdown Automata,
 supporting both **deterministic (DPDA)** and **nondeterministic (NPDA)** execution.
 Built with Next.js and TypeScript.
