@@ -1,0 +1,18 @@
+// Test-only compile step. The engine is plain TypeScript with no React or DOM
+// dependencies, so it compiles to CommonJS and runs under `node --test` without
+// adding a test framework to the dependency tree.
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": ".test-build",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "target": "ES2022",
+    "jsx": "react-jsx",
+    "incremental": false,
+    "types": ["node"]
+  },
+  "include": ["src/engine/**/*.ts", "src/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}

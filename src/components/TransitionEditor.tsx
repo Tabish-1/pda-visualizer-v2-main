@@ -1,110 +1,129 @@
-// src/components/TransitionEditor.tsx
-// Component for editing PDA transitions
-
 'use client';
 
-import React, { useState } from 'react';
-import { Transition } from '../types/pda.types';
+// Transition table with add/remove and conflict highlighting.
+
+import React, { useId, useState } from 'react';
+
+import type { Transition } from '../types/pda';
+import { formatTransition } from '../engine';
+import { nextTransitionId } from '../lib/definition';
 
 interface TransitionEditorProps {
   transitions: Transition[];
-  states: string[];
-  onTransitionsChange: (transitions: Transition[]) => void;
+  onUpdate: (transitions: Transition[]) => void;
+  conflictIds: Set<string>;
 }
 
 export const TransitionEditor: React.FC<TransitionEditorProps> = ({
   transitions,
-  states,
-  onTransitionsChange
+  onUpdate,
+  conflictIds,
 }) => {
-  const [newTransition, setNewTransition] = useState<Transition>({
+  const formId = useId();
+  const [formData, setFormData] = useState<Record<string, string>>({
     from: '',
-    to: '',
     read: '',
     pop: '',
-    push: ''
+    push: '',
+    to: '',
   });
 
-  const addTransition = () => {
-    if (newTransition.from && newTransition.to) {
-      onTransitionsChange([...transitions, { ...newTransition }]);
-      setNewTransition({ from: '', to: '', read: '', pop: '', push: '' });
-    }
+  const set = (key: string, value: string) =>
+    setFormData(prev => ({ ...prev, [key]: value }));
+
+  const add = () => {
+    if (!formData.from || !formData.to) return;
+    onUpdate([
+      ...transitions,
+      {
+        id: nextTransitionId(transitions),
+        from: formData.from,
+        read: formData.read || 'ε',
+        pop: formData.pop || 'ε',
+        push: formData.push || 'ε',
+        to: formData.to,
+      },
+    ]);
+    setFormData({ from: '', read: '', pop: '', push: '', to: '' });
   };
 
-  const removeTransition = (index: number) => {
-    onTransitionsChange(transitions.filter((_, i) => i !== index));
-  };
+  const remove = (id: string) =>
+    onUpdate(transitions.filter(t => t.id !== id));
 
   return (
-    <div className="p-4 border rounded-lg bg-white shadow-sm">
-      <h3 className="font-semibold mb-3 text-lg">Define Transitions</h3>
-      <div className="grid grid-cols-5 gap-2 mb-4">
-        <select
-          value={newTransition.from}
-          onChange={(e) => setNewTransition({ ...newTransition, from: e.target.value })}
-          className="border px-2 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="">From</option>
-          {states.map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
-        
+    <div className="sidebar-section">
+      <h3 className="sidebar-title">Add Transition</h3>
+      <div className="form-grid transition-form">
         <input
+          id={`${formId}-from`}
           type="text"
-          placeholder="Read (ε=empty)"
-          value={newTransition.read}
-          onChange={(e) => setNewTransition({ ...newTransition, read: e.target.value })}
-          className="border px-2 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="form-input"
+          placeholder="From state"
+          value={formData.from}
+          onChange={e => set('from', e.target.value)}
         />
-        
         <input
+          id={`${formId}-read`}
           type="text"
-          placeholder="Pop (ε=empty)"
-          value={newTransition.pop}
-          onChange={(e) => setNewTransition({ ...newTransition, pop: e.target.value })}
-          className="border px-2 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="form-input"
+          placeholder="Read (ε)"
+          value={formData.read}
+          onChange={e => set('read', e.target.value)}
         />
-        
         <input
+          id={`${formId}-pop`}
           type="text"
-          placeholder="Push (ε=empty)"
-          value={newTransition.push}
-          onChange={(e) => setNewTransition({ ...newTransition, push: e.target.value })}
-          className="border px-2 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="form-input"
+          placeholder="Pop (ε)"
+          value={formData.pop}
+          onChange={e => set('pop', e.target.value)}
         />
-        
-        <select
-          value={newTransition.to}
-          onChange={(e) => setNewTransition({ ...newTransition, to: e.target.value })}
-          className="border px-2 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="">To</option>
-          {states.map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
+        <input
+          id={`${formId}-push`}
+          type="text"
+          className="form-input"
+          placeholder="Push (ε)"
+          value={formData.push}
+          onChange={e => set('push', e.target.value)}
+        />
+        <input
+          id={`${formId}-to`}
+          type="text"
+          className="form-input"
+          placeholder="To state"
+          value={formData.to}
+          onChange={e => set('to', e.target.value)}
+        />
       </div>
-      
-      <button 
-        onClick={addTransition} 
-        className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 w-full mb-4"
-      >
+      <button type="button" className="btn btn-primary btn-full" onClick={add}>
         Add Transition
       </button>
-      
-      <div className="max-h-60 overflow-y-auto space-y-1">
-        {transitions.map((t, i) => (
-          <div key={i} className="flex items-center justify-between bg-gray-50 p-2 rounded text-sm">
-            <span className="font-mono">
-              {t.from} → {t.to} | {t.read || 'ε'}, {t.pop || 'ε'} → {t.push || 'ε'}
-            </span>
-            <button 
-              onClick={() => removeTransition(i)} 
-              className="text-red-500 hover:text-red-700 px-2"
-            >
-              ×
-            </button>
+
+      {transitions.length > 0 && (
+        <>
+          <h3 className="sidebar-title mt-4">Transitions ({transitions.length})</h3>
+          <div className="transition-list">
+            {transitions.map(t => (
+              <div
+                key={t.id}
+                className={`transition-item${conflictIds.has(t.id) ? ' conflict' : ''}`}
+              >
+                {/* Full δ(q, a, X) → (p, γ) form: the target state has to be
+                    visible or the list cannot be proof-read. */}
+                <span>{formatTransition(t)}</span>
+                <button
+                  type="button"
+                  className="transition-remove"
+                  onClick={() => remove(t.id)}
+                  aria-label={`Remove transition ${t.id}`}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </>
+      )}
     </div>
   );
 };

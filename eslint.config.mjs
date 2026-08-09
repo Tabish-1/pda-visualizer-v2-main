@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Compiled test output from `npm run pretest`, not source.
+    ".test-build/**",
   ]),
 ]);
 

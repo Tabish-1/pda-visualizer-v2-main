@@ -22,12 +22,17 @@ These are already available in the app — just click the example cards!
 
 **Click:** "Balanced Parentheses" example card
 
+**Mode:** DPDA
+
 **Configuration:**
 ```
-States: q0, q1, q2*
+States: q0, q2*
 Input Alphabet: (, )
 Stack Alphabet: Z0, A
 ```
+
+> `q1` used to be listed here but no transition ever referenced it. It has been
+> removed; the app now warns about unreachable states.
 
 **Transitions:**
 ```
@@ -358,3 +363,104 @@ When testing any PDA:
 **Happy Testing!**
 
 For usage instructions, see **[README.md](./README.md)**
+
+---
+
+## Nondeterministic Examples (NPDA mode)
+
+These need NPDA mode. They are the clearest demonstration of what the two modes
+differ on, so they are worth running in **both** modes to compare.
+
+### Example 4: wwᴿ — Even-Length Palindromes
+
+**Click:** "wwᴿ Even Palindrome" example card · **Mode:** NPDA
+
+```
+States: q0, q1, q2*
+Input Alphabet: a, b
+Stack Alphabet: Z0, A, B
+```
+
+**Transitions:**
+```
+δ(q0, a, Z0) → (q0, AZ0)     push phase
+δ(q0, a, A)  → (q0, AA)
+δ(q0, a, B)  → (q0, AB)
+δ(q0, b, Z0) → (q0, BZ0)
+δ(q0, b, A)  → (q0, BA)
+δ(q0, b, B)  → (q0, BB)
+δ(q0, ε, Z0) → (q1, Z0)      guess the midpoint is here
+δ(q0, ε, A)  → (q1, A)
+δ(q0, ε, B)  → (q1, B)
+δ(q1, a, A)  → (q1, ε)       match the second half
+δ(q1, b, B)  → (q1, ε)
+δ(q1, ε, Z0) → (q2, Z0)      accept
+```
+
+**Test Strings:**
+
+| Input | NPDA | DPDA | Note |
+|---|---|---|---|
+| `abba` | ACCEPTED | REJECTED | the whole point of the example |
+| `aabbaa` | ACCEPTED | REJECTED | |
+| `""` | ACCEPTED | ACCEPTED | w = ε |
+| `abab` | REJECTED | REJECTED | not a palindrome |
+| `ab` | REJECTED | REJECTED | |
+
+**Why DPDA rejects `abba`:** with no centre marker, the machine cannot see the
+midpoint. DPDA mode prefers input-consuming moves, so it pushes the entire string
+and only reaches the ε-guess after the input is gone — too late to match anything.
+Nondeterminism is genuinely required here. Note the determinism checker still calls
+this machine "deterministic": its conflicts are all *soft*, which is a statement
+about executability, not about recognising the same language.
+
+### Example 5: aⁱbʲcᵏ where i=j or j=k
+
+**Click:** "aⁱbʲcᵏ (i=j or j=k)" example card · **Mode:** NPDA
+
+```
+States: q0, p0, p1, p2, p3*, r0, r1, r2, r3*
+Input Alphabet: a, b, c
+Stack Alphabet: Z0, A, B
+```
+
+**Transitions:**
+```
+δ(q0, ε, Z0) → (p0, Z0)      guess: prove i=j
+δ(q0, ε, Z0) → (r0, Z0)      guess: prove j=k
+
+δ(p0, a, Z0) → (p0, AZ0)     branch p: count a's
+δ(p0, a, A)  → (p0, AA)
+δ(p0, ε, Z0) → (p1, Z0)
+δ(p0, ε, A)  → (p1, A)
+δ(p1, b, A)  → (p1, ε)       match b's against a's
+δ(p1, ε, Z0) → (p2, Z0)
+δ(p2, c, Z0) → (p2, Z0)      ignore the c's
+δ(p2, ε, Z0) → (p3, Z0)
+
+δ(r0, a, Z0) → (r0, Z0)      branch r: ignore the a's
+δ(r0, ε, Z0) → (r1, Z0)
+δ(r1, b, Z0) → (r1, BZ0)     count b's
+δ(r1, b, B)  → (r1, BB)
+δ(r1, ε, Z0) → (r2, Z0)
+δ(r1, ε, B)  → (r2, B)
+δ(r2, c, B)  → (r2, ε)       match c's against b's
+δ(r2, ε, Z0) → (r3, Z0)
+```
+
+**Test Strings:**
+
+| Input | i,j,k | Expected | Why |
+|---|---|---|---|
+| `aabbc` | 2,2,1 | ACCEPTED | i=j |
+| `abbcc` | 1,2,2 | ACCEPTED | j=k |
+| `aabbcc` | 2,2,2 | ACCEPTED | both |
+| `aabc` | 2,1,1 | ACCEPTED | j=k |
+| `abc` | 1,1,1 | ACCEPTED | both |
+| `abbc` | 1,2,1 | REJECTED | neither holds |
+| `aabbbcc` | 2,3,2 | REJECTED | neither holds |
+
+**Why this one is a *hard* conflict:** two ε-moves leave `q0` on the same stack top,
+one per disjunct. No priority rule distinguishes them, so the determinism checker
+reports the machine as nondeterministic and DPDA mode cannot run it faithfully. This
+is the standard proof-by-example that DPDAs are strictly weaker than NPDAs.

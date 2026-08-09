@@ -1,199 +1,132 @@
-
-// src/components/StateDiagram.tsx
-// Canvas-based state diagram visualization — highlights ALL currently active states
-
 'use client';
 
-import React, { useRef, useEffect, useMemo } from 'react';
-import { Transition } from '../types/pda.types';
+// Canvas host for the state diagram.
+//
+// The component owns only the things React is good at here: refs, sizing and
+// invalidation. All drawing lives in renderDiagram. Redraws are driven by a
+// ResizeObserver and by the `theme` prop, so the diagram no longer keeps stale
+// colours after a theme toggle or stale geometry after a window resize.
+
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+
+import type { PDADefinition } from '../types/pda';
+import { computeLayout } from '../lib/layout';
+import {
+  renderDiagram,
+  type DiagramColors,
+  type DiagramState,
+} from '../lib/renderDiagram';
 
 interface StateDiagramProps {
-  states: string[];
-  transitions: Transition[];
-  currentStates: string[];   // all states the NPDA could currently be in
-  startState: string;
-  acceptStates: string[];
+  definition: PDADefinition;
+  state: DiagramState;
+  /** Only used to force a redraw when the palette changes. */
+  theme: string;
+  height?: number;
+}
+
+const COLOR_KEYS: Array<keyof DiagramColors> = [
+  'text',
+  'text2',
+  'accent',
+  'border',
+  'surface',
+  'green',
+  'red',
+  'cyan',
+];
+
+/** Reads the live palette so the canvas matches the active theme. */
+function readColors(): DiagramColors {
+  const styles = getComputedStyle(document.documentElement);
+  const colors = {} as DiagramColors;
+  for (const key of COLOR_KEYS) {
+    colors[key] = styles.getPropertyValue(`--${key}`).trim() || '#888888';
+  }
+  return colors;
 }
 
 export const StateDiagram: React.FC<StateDiagramProps> = ({
-  states,
-  transitions,
-  currentStates,
-  startState,
-  acceptStates
+  definition,
+  state,
+  theme,
+  height = 420,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const retryRef = useRef(0);
+  /** Lets the zero-size retry below call the latest draw without a cyclic dep. */
+  const drawRef = useRef<() => void>(() => {});
+  const layout = useMemo(() => computeLayout(definition), [definition]);
 
-  const positions = useMemo(() => {
-    if (states.length === 0) return {};
-
-    const newPositions: Record<string, { x: number; y: number }> = {};
-    const centerX = 400;
-    const centerY = 250;
-    const radius = Math.min(150, 60 * states.length);
-
-    states.forEach((state, index) => {
-      const angle = (2 * Math.PI * index) / states.length - Math.PI / 2;
-      newPositions[state] = {
-        x: centerX + radius * Math.cos(angle),
-        y: centerY + radius * Math.sin(angle)
-      };
-    });
-
-    return newPositions;
-  }, [states]);
-
-  useEffect(() => {
+  const draw = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const rect = canvas.getBoundingClientRect();
+    // Layout may not have happened yet on the first effect pass. Retry next frame
+    // instead of returning, so the paint never depends on a later resize to arrive.
+    if (rect.width === 0 || rect.height === 0) {
+      retryRef.current = requestAnimationFrame(() => drawRef.current());
+      return;
+    }
 
-    // Draw transitions
-    transitions.forEach(t => {
-      const from = positions[t.from];
-      const to = positions[t.to];
-      if (!from || !to) return;
+    const dpr = window.devicePixelRatio || 1;
+    const pixelWidth = Math.round(rect.width * dpr);
+    const pixelHeight = Math.round(rect.height * dpr);
+    // Reassigning width/height clears the canvas, so only do it on real change.
+    if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
+      canvas.width = pixelWidth;
+      canvas.height = pixelHeight;
+    }
 
-      ctx.beginPath();
-      ctx.strokeStyle = '#94A3B8';
-      ctx.lineWidth = 2;
-
-      if (t.from === t.to) {
-        ctx.arc(from.x, from.y - 40, 20, 0, 2 * Math.PI);
-      } else {
-        ctx.moveTo(from.x, from.y);
-        ctx.lineTo(to.x, to.y);
-      }
-      ctx.stroke();
-
-      // Arrowhead
-      if (t.from !== t.to) {
-        const angle = Math.atan2(to.y - from.y, to.x - from.x);
-        const arrowX = to.x - 32 * Math.cos(angle);
-        const arrowY = to.y - 32 * Math.sin(angle);
-
-        ctx.beginPath();
-        ctx.moveTo(arrowX, arrowY);
-        ctx.lineTo(arrowX - 10 * Math.cos(angle - Math.PI / 6), arrowY - 10 * Math.sin(angle - Math.PI / 6));
-        ctx.lineTo(arrowX - 10 * Math.cos(angle + Math.PI / 6), arrowY - 10 * Math.sin(angle + Math.PI / 6));
-        ctx.closePath();
-        ctx.fillStyle = '#94A3B8';
-        ctx.fill();
-      }
-
-      // Transition label
-      const midX = t.from === t.to ? from.x : (from.x + to.x) / 2;
-      const midY = t.from === t.to ? from.y - 65 : (from.y + to.y) / 2;
-      ctx.fillStyle = '#374151';
-      ctx.font = '12px monospace';
-      ctx.textAlign = 'center';
-      const label = `${t.read || 'ε'},${t.pop || 'ε'}→${t.push || 'ε'}`;
-      ctx.fillText(label, midX, midY - 5);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    renderDiagram({
+      ctx,
+      width: rect.width,
+      height: rect.height,
+      layout,
+      definition,
+      colors: readColors(),
+      state,
     });
+  }, [definition, layout, state]);
 
-    // Draw states
-    states.forEach(state => {
-      const pos = positions[state];
-      if (!pos) return;
+  useEffect(() => {
+    drawRef.current = draw;
+  }, [draw]);
 
-      const isActive = currentStates.includes(state);
-      const isAccept = acceptStates.includes(state);
+  // `theme` is not read by draw itself; it is a dependency so a toggle repaints.
+  useEffect(() => {
+    draw();
+    return () => cancelAnimationFrame(retryRef.current);
+  }, [draw, theme]);
 
-      // Pick fill colour based on active/accept combination
-      let fillColor: string;
-      if (isActive && isAccept) fillColor = '#22C55E';  // green — active accept state
-      else if (isActive)        fillColor = '#3B82F6';  // blue  — active non-accept
-      else if (isAccept)        fillColor = '#94A3B8';  // gray  — inactive accept
-      else                      fillColor = '#94A3B8';  // gray  — inactive
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || typeof ResizeObserver === 'undefined') return;
 
-      // Glow ring for active states
-      if (isActive) {
-        ctx.beginPath();
-        ctx.arc(pos.x, pos.y, 36, 0, 2 * Math.PI);
-        ctx.fillStyle = isAccept ? 'rgba(34,197,94,0.2)' : 'rgba(59,130,246,0.2)';
-        ctx.fill();
-      }
-
-      // Main circle
-      ctx.beginPath();
-      ctx.arc(pos.x, pos.y, 30, 0, 2 * Math.PI);
-      ctx.fillStyle = fillColor;
-      ctx.fill();
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 3;
-      ctx.stroke();
-
-      // Double ring for accept states
-      if (isAccept) {
-        ctx.beginPath();
-        ctx.arc(pos.x, pos.y, 25, 0, 2 * Math.PI);
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-      }
-
-      // Start-state arrow
-      if (state === startState) {
-        ctx.beginPath();
-        ctx.moveTo(pos.x - 50, pos.y);
-        ctx.lineTo(pos.x - 33, pos.y);
-        ctx.strokeStyle = '#1E293B';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(pos.x - 33, pos.y);
-        ctx.lineTo(pos.x - 40, pos.y - 5);
-        ctx.lineTo(pos.x - 40, pos.y + 5);
-        ctx.closePath();
-        ctx.fillStyle = '#1E293B';
-        ctx.fill();
-      }
-
-      // State label
-      ctx.fillStyle = '#fff';
-      ctx.font = 'bold 14px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(state, pos.x, pos.y);
+    let frame = 0;
+    const observer = new ResizeObserver(() => {
+      // Coalesce bursts of resize callbacks into one paint per frame.
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(draw);
     });
-
-    // Legend
-    const lx = 16;
-    let ly = 16;
-    ctx.font = '12px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-
-    const legend: [string, string][] = [
-      ['#3B82F6', 'Active'],
-      ['#22C55E', 'Active + Accept'],
-      ['#94A3B8', 'Inactive'],
-    ];
-    legend.forEach(([color, label]) => {
-      ctx.beginPath();
-      ctx.arc(lx + 8, ly + 8, 8, 0, 2 * Math.PI);
-      ctx.fillStyle = color;
-      ctx.fill();
-      ctx.fillStyle = '#374151';
-      ctx.fillText(label, lx + 22, ly + 8);
-      ly += 22;
-    });
-
-  }, [positions, states, transitions, currentStates, acceptStates, startState]);
+    observer.observe(canvas);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, [draw]);
 
   return (
-    <div className="border rounded-lg bg-white shadow-sm p-4">
-      <h3 className="font-semibold mb-2 text-lg text-center">State Diagram</h3>
-      <canvas
-        ref={canvasRef}
-        width={800}
-        height={500}
-        className="w-full border rounded"
-      />
-    </div>
+    <canvas
+      ref={canvasRef}
+      className="state-canvas"
+      style={{ height }}
+      role="img"
+      aria-label={`State diagram for ${definition.name || 'the current PDA'}`}
+    />
   );
 };

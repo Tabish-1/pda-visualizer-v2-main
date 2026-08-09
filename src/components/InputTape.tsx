@@ -1,37 +1,53 @@
-
-// src/components/InputTape.tsx
-// Visual representation of the input string
-
 'use client';
+
+// Input tape with the read head at the current position.
 
 import React from 'react';
 
 interface InputTapeProps {
   input: string;
   position: number;
+  /** Shown when several branches sit at different positions. */
+  spread?: number[];
 }
 
-export const InputTape: React.FC<InputTapeProps> = ({ input, position }) => {
+export const InputTape: React.FC<InputTapeProps> = ({ input, position, spread }) => {
+  const heads = new Set(spread ?? [position]);
+
   return (
-    <div className="border rounded-lg p-4 bg-white shadow-sm">
-      <h3 className="font-semibold mb-4 text-center text-lg">Input Tape</h3>
-      <div className="flex gap-1 justify-center flex-wrap">
-        {input.split('').map((char, index) => (
-          <div
-            key={index}
-            className={`w-12 h-12 flex items-center justify-center border-2 rounded font-mono text-lg transition-all duration-300 ${
-              index === position
-                ? 'bg-yellow-200 border-yellow-500 scale-110 shadow-lg'
-                : index < position
-                ? 'bg-gray-200 border-gray-400 opacity-50'
-                : 'bg-white border-gray-300'
-            }`}
-          >
-            {char}
+    <div className="viz-panel">
+      <div className="viz-panel-header">
+        <span className="viz-panel-title">Input Tape</span>
+        <span className="text-accent">
+          Position: {position}
+          {input.length > 0 ? ` / ${input.length}` : ''}
+        </span>
+      </div>
+      <div className="viz-panel-content">
+        {input.length === 0 ? (
+          <span className="tape-note">
+            Empty input — the machine still runs its ε-moves.
+          </span>
+        ) : (
+          <div className="tape-container">
+            {input.split('').map((char, index) => {
+              const consumed = index < position;
+              const isHead = heads.has(index);
+              return (
+                <div
+                  key={index}
+                  className={`tape-cell${isHead ? ' current' : ''}${
+                    consumed && !isHead ? ' consumed' : ''
+                  }`}
+                >
+                  {char}
+                </div>
+              );
+            })}
+            <div className={`tape-cell tape-end${position >= input.length ? ' current' : ''}`}>
+              ⊣
+            </div>
           </div>
-        ))}
-        {input.length === 0 && (
-          <div className="text-gray-400 italic">No input</div>
         )}
       </div>
     </div>

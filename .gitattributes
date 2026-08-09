@@ -1,0 +1,17 @@
+# Normalise line endings so the repo is identical regardless of the platform it
+# was committed from. Without this, committing on Windows stores CRLF and every
+# file looks modified when cloned on macOS or Linux.
+* text=auto eol=lf
+
+# Binary files must never be normalised.
+*.ico binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.woff binary
+*.woff2 binary
+*.docx binary
+
+# Generated: collapse in diffs and exclude from language statistics.
+package-lock.json linguist-generated=true -diff
